@@ -5,7 +5,6 @@ import { FiUserPlus, FiTrash2, FiShield, FiUsers } from "react-icons/fi";
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   
   // Form State
   const [name, setName] = useState("");
@@ -17,8 +16,7 @@ export default function Users() {
   const loadUsers = () => {
     api.get<User[]>("/auth/users")
       .then((res) => setUsers(res.data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+      .catch((err) => console.error(err));
   };
 
   useEffect(() => {
