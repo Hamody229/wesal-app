@@ -13,13 +13,10 @@ export default function Toast({ message, show, type = "warning", onClose }: Prop
                   "bg-warning";
 
   return (
-    <div
-      className="position-fixed bottom-0 end-0 p-3"
-      style={{ zIndex: 1055 }}
-    >
-      <div className={`toast show align-items-center text-white ${bgColor} border-0`} role="alert">
+    <div className="position-fixed bottom-0 end-0 p-3" style={{ zIndex: 1055 }}>
+      <div className={`toast show align-items-center text-white ${bgColor} border-0 shadow-lg`} role="alert">
         <div className="d-flex">
-          <div className="toast-body">
+          <div className="toast-body fw-bold">
             {message}
           </div>
           <button 

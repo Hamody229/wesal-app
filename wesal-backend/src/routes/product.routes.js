@@ -10,12 +10,26 @@ router.get("/", auth(), async (req, res) => {
 
 router.post("/", auth(["Admin" , "Owner"]), async (req, res) => {
   try {
+    const { name, category, merchantId } = req.body;
+
+    const existingProduct = await Product.findOne({
+      name: { $regex: new RegExp(`^${name}$`, 'i') },
+      category: category,
+      merchant: merchantId
+    });
+
+    if (existingProduct) {
+      return res.status(400).json({ 
+        message: "This product already exists with the same category and merchant!" 
+      });
+    }
+
     const product = await Product.create({
-      name: req.body.name,
-      category: req.body.category,
+      name: name,
+      category: category,
       price: req.body.price,
       quantity: req.body.quantity,
-      merchant: req.body.merchantId,
+      merchant: merchantId,
     });
 
     const populated = await product.populate("merchant");

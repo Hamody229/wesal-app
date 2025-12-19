@@ -36,27 +36,30 @@ export default function Products() {
       .finally(() => setLoading(false));
   }, []);
 
-  const saveProduct = async (product: Product) => {
-    try {
-      if (editProduct?._id) {
-        const res = await api.put<Product>(`/products/${editProduct._id}`, product);
-        setProducts(products.map((p) => (p._id === res.data._id ? res.data : p)));
-        setToastMessage("Product updated successfully");
-      } else {
-        const res = await api.post<Product>("/products", product);
-        setProducts([...products, res.data]);
-        setToastMessage("Product created successfully");
+  const saveProduct = async (product: any) => {
+      try {
+        if (editProduct?._id) {
+          const res = await api.put<Product>(`/products/${editProduct._id}`, product);
+          setProducts(products.map((p) => (p._id === res.data._id ? res.data : p)));
+          setToastMessage("Product updated successfully");
+          setToastType("success");
+        } else {
+          const res = await api.post<Product>("/products", product);
+          setProducts([...products, res.data]);
+          setToastMessage("Product added successfully");
+          setToastType("success");
+        }
+        
+        setShowToast(true);
+        setShowModal(false);
+        setEditProduct(undefined);
+      } catch (error: any) {
+        const errorMsg = error.response?.data?.message || "An error occurred while saving product";
+        setToastMessage(errorMsg);
+        setToastType("danger");
+        setShowToast(true);
       }
-      setToastType("success");
-      setShowToast(true);
-      setShowModal(false);
-      setEditProduct(undefined);
-    } catch (error) {
-      setToastMessage("Failed to save product");
-      setToastType("danger");
-      setShowToast(true);
-    }
-  };
+    };
 
   const deleteProduct = async (id?: string) => {
     if (!id) return;
