@@ -5,7 +5,7 @@ const merchantSchema = new mongoose.Schema(
     name: { type: String, required: true },
     address: String,
     googleMapsLink: String,
-    phone: String,
+    phone: [String], 
   },
   { timestamps: true }
 );

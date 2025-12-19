@@ -3,5 +3,5 @@ export type Merchant = {
   name: string;
   address?: string;
   googleMapsLink?: string;
-  phone?: string;
+  phone: string[]; 
 };

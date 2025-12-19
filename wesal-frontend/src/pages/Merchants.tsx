@@ -20,7 +20,8 @@ export default function Merchants() {
       .finally(() => setLoading(false));
   }, []);
 
-  const saveMerchant = async (merchant: Merchant) => {
+const saveMerchant = async (merchant: Merchant) => {
+  try {
     if (editMerchant?._id) {
       const res = await api.put<Merchant>(`/merchants/${editMerchant._id}`, merchant);
       setMerchants(merchants.map((m) => (m._id === res.data._id ? res.data : m)));
@@ -28,10 +29,10 @@ export default function Merchants() {
       const res = await api.post<Merchant>("/merchants", merchant);
       setMerchants([...merchants, res.data]);
     }
-    setShowModal(false);
-    setEditMerchant(undefined);
-  };
-
+  } catch (error: any) {
+    const msg = error.response?.data?.message || "Error saving merchant";
+  }
+};
   const deleteMerchant = async (id?: string) => {
     if (!id) return;
     if(!window.confirm("Are you sure?")) return;

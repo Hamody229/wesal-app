@@ -10,19 +10,14 @@ router.get("/", auth(), async (req, res) => {
 
 router.post("/", auth(["Admin" , "Owner"]), async (req, res) => {
   try {
-    const merchant = await Merchant.create(req.body);
-    
-    await AuditLog.create({
-      action: 'CREATE',
-      entity: 'Merchant',
-      entityId: merchant._id,
-      details: `Added new merchant: ${merchant.name}`,
-      performedBy: {
-        name: req.user.name || "Admin",
-        role: req.user.role || "Admin"
-      }
-    });
+    const { name } = req.body;
 
+    const existing = await Merchant.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+    if (existing) {
+      return res.status(400).json({ message: "This merchant already exists!" });
+    }
+
+    const merchant = await Merchant.create(req.body);
     res.json(merchant);
   } catch (err) {
     res.status(500).json({ message: err.message });
