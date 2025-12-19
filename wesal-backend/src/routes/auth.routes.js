@@ -46,9 +46,12 @@ router.post("/create-user", auth(["Owner"]), async (req, res) => {
   }
 });
 
-router.get("/users", auth(["Owner"]), async (req, res) => {
-  const users = await User.find().select("-password"); 
-  res.json(users);
+router.get("/me", auth(), async (req, res) => {
+  try {
+    res.json(req.user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 router.put("/profile", auth(), async (req, res) => {

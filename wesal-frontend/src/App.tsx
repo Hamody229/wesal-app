@@ -9,6 +9,8 @@ import Funds from "./pages/Funds";
 import Users from "./pages/Users"; 
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import api from "./services/api";
+import { useEffect } from "react";
 
 // Layout Wrapper
 function Layout({ children }: { children: React.ReactNode }) {
@@ -23,6 +25,18 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    const validateSession = async () => {
+      if (localStorage.getItem("token")) {
+        try {
+          await api.get("/auth/me"); 
+        } catch (err) {
+          console.error("Session invalid or user deleted");
+        }
+      }
+    };
+    validateSession();
+  }, []);
   return (
     <BrowserRouter>
       <Routes>
