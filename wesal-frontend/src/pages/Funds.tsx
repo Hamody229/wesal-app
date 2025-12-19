@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import type { Fund } from "../types/Fund";
 import { FiDollarSign, FiPlus, FiTrendingUp, FiPieChart, FiSave, FiTrash2, FiLock } from "react-icons/fi";
+import Toast from "../components/Toast"; 
 
 export default function Funds() {
   const [funds, setFunds] = useState<Fund[]>([]);
@@ -10,8 +11,11 @@ export default function Funds() {
   const [newAmount, setNewAmount] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "danger">("success");
+
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  
   const canEdit = user.role === "Admin" || user.role === "Owner"; 
 
   const loadFunds = () => {
@@ -26,27 +30,30 @@ export default function Funds() {
     loadFunds();
   }, []);
 
-
-   const addFund = async () => {
+  const addFund = async () => {
     if (!newCategory) return;
     
     try {
-        await api.post("/funds", {
+      await api.post("/funds", {
         category: newCategory,
         amount: newAmount,
-        });
-        setNewCategory("");
-        setNewAmount(0);
-        loadFunds();
+      });
+      
+      setNewCategory("");
+      setNewAmount(0);
+      loadFunds();
+      
+      setToastMessage("Category has been added");
+      setToastType("success");
+      setShowToast(true);
     } catch (error: any) {
-        if (error.response && error.response.data && error.response.data.message) {
-        alert(error.response.data.message); 
-        } else {
-        alert("Error");
-        }
-        console.error("Error adding fund:", error);
+      const errorMsg = error.response?.data?.message || "Error while adding category!!";
+      setToastMessage(errorMsg);
+      setToastType("danger");
+      setShowToast(true);
+      console.error("Error adding fund:", error);
     }
-    };
+  };
 
   const deleteFund = async (id?: string) => {
     if (!id) return;
@@ -55,20 +62,39 @@ export default function Funds() {
     try {
       await api.delete(`/funds/${id}`);
       loadFunds();
-    } catch (error) {
-      console.error("Error deleting fund:", error);
-      alert("Failed to delete item");
+      setToastMessage("Deleted successfully");
+      setToastType("success");
+      setShowToast(true);
+    } catch (error: any) {
+      setToastMessage("Failed to delete");
+      setToastType("danger");
+      setShowToast(true);
     }
   };
 
   const updateAmount = async (id?: string, amount?: number) => {
     if (!id) return;
-    await api.put(`/funds/${id}`, { amount });
-    loadFunds();
+    try {
+        await api.put(`/funds/${id}`, { amount });
+        loadFunds();
+    } catch (error) {
+        console.error("Update failed", error);
+    }
   };
 
   return (
     <>
+      {/* Toast Notification */}
+      {showToast && (
+        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999 }}>
+          <Toast 
+            message={toastMessage} 
+            type={toastType} 
+            onClose={() => setShowToast(false)} 
+          />
+        </div>
+      )}
+
       <div className="d-flex align-items-center gap-2 mb-4">
         <div className="bg-success bg-opacity-10 p-2 rounded-circle text-success">
             <FiPieChart size={24} />
@@ -80,7 +106,6 @@ export default function Funds() {
       </div>
 
       <div className="row g-4 mb-4">
-        {/* Total Card */}
         <div className="col-md-5 col-lg-4">
             <div className="card border-0 shadow-sm rounded-4 text-white overflow-hidden h-100" 
                  style={{background: 'linear-gradient(135deg, #198754 0%, #20c997 100%)'}}>
@@ -137,7 +162,6 @@ export default function Funds() {
         )}
       </div>
 
-      {/* Funds List */}
       <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div className="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
             <h6 className="fw-bold mb-0">All Funds</h6>
@@ -177,12 +201,10 @@ export default function Funds() {
                         <td className="text-end pe-4">
                             <div className="d-flex align-items-center justify-content-end gap-2">
                                 <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Active</span>
-                                
                                 {canEdit && (
                                     <button 
                                         className="btn btn-light text-danger btn-sm rounded-circle p-2 d-flex align-items-center justify-content-center hover-shadow"
                                         onClick={() => deleteFund(f._id)}
-                                        title="Delete Category"
                                         style={{width: 32, height: 32}}
                                     >
                                         <FiTrash2 size={14} />
