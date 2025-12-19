@@ -11,12 +11,21 @@ export default function Funds() {
   const [newAmount, setNewAmount] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Toast States
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "danger">("success");
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const canEdit = user.role === "Admin" || user.role === "Owner"; 
+
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   const loadFunds = () => {
     api.get("/funds").then((res) => {
@@ -43,7 +52,7 @@ export default function Funds() {
       setNewAmount(0);
       loadFunds();
       
-      setToastMessage("Category has been added");
+      setToastMessage("Category has been added successfully");
       setToastType("success");
       setShowToast(true);
     } catch (error: any) {
@@ -51,7 +60,6 @@ export default function Funds() {
       setToastMessage(errorMsg);
       setToastType("danger");
       setShowToast(true);
-      console.error("Error adding fund:", error);
     }
   };
 
@@ -84,16 +92,12 @@ export default function Funds() {
 
   return (
     <>
-      {/* Toast Notification */}
-      {showToast && (
-        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999 }}>
-          <Toast 
-            message={toastMessage} 
-            type={toastType} 
-            onClose={() => setShowToast(false)} 
-          />
-        </div>
-      )}
+      <Toast 
+        show={showToast}
+        message={toastMessage} 
+        type={toastType} 
+        onClose={() => setShowToast(false)} 
+      />
 
       <div className="d-flex align-items-center gap-2 mb-4">
         <div className="bg-success bg-opacity-10 p-2 rounded-circle text-success">
