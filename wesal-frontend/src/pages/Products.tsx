@@ -13,10 +13,21 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | undefined>();
-  const [toast, setToast] = useState("");
+  
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "danger" | "warning">("success");
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const canEdit = user.role === "Admin" || user.role === "Owner";
+
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   useEffect(() => {
     api
@@ -26,22 +37,41 @@ export default function Products() {
   }, []);
 
   const saveProduct = async (product: Product) => {
-    if (editProduct?._id) {
-      const res = await api.put<Product>(`/products/${editProduct._id}`, product);
-      setProducts(products.map((p) => (p._id === res.data._id ? res.data : p)));
-    } else {
-      const res = await api.post<Product>("/products", product);
-      setProducts([...products, res.data]);
+    try {
+      if (editProduct?._id) {
+        const res = await api.put<Product>(`/products/${editProduct._id}`, product);
+        setProducts(products.map((p) => (p._id === res.data._id ? res.data : p)));
+        setToastMessage("Product updated successfully");
+      } else {
+        const res = await api.post<Product>("/products", product);
+        setProducts([...products, res.data]);
+        setToastMessage("Product created successfully");
+      }
+      setToastType("success");
+      setShowToast(true);
+      setShowModal(false);
+      setEditProduct(undefined);
+    } catch (error) {
+      setToastMessage("Failed to save product");
+      setToastType("danger");
+      setShowToast(true);
     }
-    setShowModal(false);
-    setEditProduct(undefined);
   };
 
   const deleteProduct = async (id?: string) => {
     if (!id) return;
     if(!window.confirm("Are you sure you want to delete this product?")) return;
-    await api.delete(`/products/${id}`);
-    setProducts(products.filter((p) => p._id !== id));
+    try {
+      await api.delete(`/products/${id}`);
+      setProducts(products.filter((p) => p._id !== id));
+      setToastMessage("Product deleted successfully");
+      setToastType("success");
+      setShowToast(true);
+    } catch (error) {
+      setToastMessage("Failed to delete product");
+      setToastType("danger");
+      setShowToast(true);
+    }
   };
 
   const addToBag = (product: Product) => {
@@ -50,7 +80,8 @@ export default function Products() {
 
     if (exists) {
       exists.quantityInBag += 1;
-      setToast("Quantity updated in bag");
+      setToastMessage("Quantity updated in bag");
+      setToastType("warning");
     } else {
       bag.push({
         productId: product._id,
@@ -59,13 +90,14 @@ export default function Products() {
         price: product.price,
         quantityInBag: 1,
       });
-      setToast("Added to bag successfully");
+      setToastMessage("Added to bag successfully");
+      setToastType("success");
     }
 
     localStorage.setItem("bag", JSON.stringify(bag));
     localStorage.setItem("bagSeen", "false");
     window.dispatchEvent(new Event("bag-updated"));
-    setTimeout(() => setToast(""), 2000);
+    setShowToast(true);
   };
 
   const filteredProducts = products.filter(p => 
@@ -82,7 +114,6 @@ export default function Products() {
         </div>
 
         <div className="d-flex flex-wrap gap-2">
-            {/* Search Input */}
             <div className="input-group shadow-sm" style={{maxWidth: '250px'}}>
                 <span className="input-group-text bg-white border-0 ps-3"><FiSearch className="text-muted"/></span>
                 <input 
@@ -114,7 +145,6 @@ export default function Products() {
                 </>
             )}
 
-            {/* Add Button */}
             {canEdit && (
             <button
                 className="btn btn-primary d-flex align-items-center gap-2 px-4 rounded-3 shadow-sm"
@@ -235,7 +265,13 @@ export default function Products() {
         onSave={saveProduct}
         initial={editProduct}
       />
-      <Toast message={toast} show={!!toast} />
+      
+      <Toast 
+        message={toastMessage} 
+        show={showToast} 
+        type={toastType} 
+        onClose={() => setShowToast(false)} 
+      />
     </>
   );
 }

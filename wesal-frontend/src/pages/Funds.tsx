@@ -19,7 +19,6 @@ export default function Funds() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const canEdit = user.role === "Admin" || user.role === "Owner"; 
 
-  // Auto-hide toast after 3 seconds
   useEffect(() => {
     if (showToast) {
       const timer = setTimeout(() => setShowToast(false), 3000);
