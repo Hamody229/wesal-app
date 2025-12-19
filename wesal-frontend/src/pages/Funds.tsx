@@ -26,16 +26,27 @@ export default function Funds() {
     loadFunds();
   }, []);
 
-  const addFund = async () => {
+
+   const addFund = async () => {
     if (!newCategory) return;
-    await api.post("/funds", {
-      category: newCategory,
-      amount: newAmount,
-    });
-    setNewCategory("");
-    setNewAmount(0);
-    loadFunds();
-  };
+    
+    try {
+        await api.post("/funds", {
+        category: newCategory,
+        amount: newAmount,
+        });
+        setNewCategory("");
+        setNewAmount(0);
+        loadFunds();
+    } catch (error: any) {
+        if (error.response && error.response.data && error.response.data.message) {
+        alert(error.response.data.message); 
+        } else {
+        alert("Error");
+        }
+        console.error("Error adding fund:", error);
+    }
+    };
 
   const deleteFund = async (id?: string) => {
     if (!id) return;

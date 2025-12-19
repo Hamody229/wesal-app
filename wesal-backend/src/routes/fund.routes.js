@@ -12,9 +12,16 @@ router.get("/", auth(["Admin", "Owner", "Viewer"]), async (req, res) => {
   }
 });
 
+
 router.post("/", auth(["Admin", "Owner"]), async (req, res) => {
   try {
     const { category, amount } = req.body;
+    
+    const existingFund = await Fund.findOne({ category });
+    if (existingFund) {
+      return res.status(400).json({ message: "This category is already added!!" });
+    }
+
     const newFund = await Fund.create({ category, amount });
     res.status(201).json(newFund);
   } catch (err) {
