@@ -45,6 +45,11 @@ const startServer = async () => {
   }
 };
 
-startServer();
+connectDB(); 
+
+app.get("/", (req, res) => {
+    res.send("Wesal Server is Running on Vercel!");
+});
+
 
 module.exports = app;
