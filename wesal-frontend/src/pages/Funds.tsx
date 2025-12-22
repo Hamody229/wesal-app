@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../services/api";
 import type { Fund } from "../types/Fund";
 import { FiDollarSign, FiPlus, FiTrendingUp, FiPieChart, FiSave, FiTrash2, FiLock } from "react-icons/fi";
@@ -11,13 +11,19 @@ export default function Funds() {
   const [newAmount, setNewAmount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Toast States
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "danger">("success");
 
+  const timeoutRef = useRef<any>(null);
+
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const canEdit = user.role === "Admin" || user.role === "Owner"; 
+
+  useEffect(() => {
+    const newTotal = funds.reduce((sum, item) => sum + (item.amount || 0), 0);
+    setTotal(newTotal);
+  }, [funds]);
 
   useEffect(() => {
     if (showToast) {
@@ -40,17 +46,14 @@ export default function Funds() {
 
   const addFund = async () => {
     if (!newCategory) return;
-    
     try {
       await api.post("/funds", {
         category: newCategory,
         amount: newAmount,
       });
-      
       setNewCategory("");
       setNewAmount(0);
       loadFunds();
-      
       setToastMessage("Category has been added successfully");
       setToastType("success");
       setShowToast(true);
@@ -65,7 +68,6 @@ export default function Funds() {
   const deleteFund = async (id?: string) => {
     if (!id) return;
     if (!window.confirm("Are you sure you want to delete this fund source?")) return;
-    
     try {
       await api.delete(`/funds/${id}`);
       loadFunds();
@@ -79,14 +81,19 @@ export default function Funds() {
     }
   };
 
-  const updateAmount = async (id?: string, amount?: number) => {
+  const updateAmount = (id?: string, amount?: number) => {
     if (!id) return;
-    try {
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(async () => {
+      try {
         await api.put(`/funds/${id}`, { amount });
-        loadFunds();
-    } catch (error) {
+      } catch (error) {
         console.error("Update failed", error);
-    }
+        loadFunds(); 
+      }
+    }, 500); 
   };
 
   return (
@@ -115,7 +122,7 @@ export default function Funds() {
                 <div className="card-body p-4 d-flex flex-column justify-content-between">
                     <div>
                         <p className="mb-1 opacity-75 fw-medium">Total Collected</p>
-                        <h2 className="fw-bold mb-0 d-flex align-items-center gap-2">
+                        <h2 className="fw-bold mb-0">
                             EGP {loading ? "..." : total.toLocaleString()}
                         </h2>
                     </div>
@@ -191,7 +198,13 @@ export default function Funds() {
                                     disabled={!canEdit} 
                                     className={`form-control border-start-0 ps-0 fw-bold text-dark ${!canEdit ? 'bg-white' : ''}`}
                                     value={f.amount}
-                                    onChange={(e) => updateAmount(f._id, Number(e.target.value))}
+                                    onChange={(e) => {
+                                      const val = Number(e.target.value);
+                                      setFunds(prev => prev.map(item => 
+                                          item._id === f._id ? { ...item, amount: val } : item
+                                      ));
+                                      updateAmount(f._id, val);
+                                    }}
                                     style={{maxWidth: '150px'}}
                                 />
                                 {canEdit && (
