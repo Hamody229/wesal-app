@@ -1,22 +1,21 @@
 const mongoose = require("mongoose");
 
-let isConnected = false; 
+let cachedDb = null;
 
 const connectDB = async () => {
-  mongoose.set("strictQuery", true);
-
-  if (isConnected) {
+  if (cachedDb) {
     console.log("=> Using existing database connection");
-    return;
+    return cachedDb;
   }
 
+  console.log("=> Creating new database connection");
   try {
     const db = await mongoose.connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 5000, 
     });
 
-    isConnected = db.connections[0].readyState;
-    console.log("=> New database connection established");
+    cachedDb = db;
+    return db;
   } catch (error) {
     console.error("=> Database connection error:", error.message);
     throw error;
