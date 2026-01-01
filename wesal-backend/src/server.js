@@ -37,7 +37,6 @@ app.get("/", (req, res) => {
   res.send("Wesal Server is Running on Vercel!");
 });
 
-/* ============== Error Handler (آخر حاجة) ============== */
 app.use((err, req, res, next) => {
   console.error("FULL ERROR DETAILS:", err);
   res.status(err.status || 500).json({
@@ -45,5 +44,11 @@ app.use((err, req, res, next) => {
     message: err.message || "Internal Server Error"
   });
 });
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running locally on port ${PORT}`);
+  });
+}
 
 module.exports = app;
